@@ -1,0 +1,21 @@
+- name: maven package tomcat deploy
+  hosts: webservers
+  become: yes
+  become_method: sudo
+  vars:
+     remote_warfile: /home/ubuntu/SampleWebApplication/target/SampleWebApplication.war
+     remote_webapps: /var/lib/tomcat9/webapps/
+
+  tasks:
+  - name: tomcat stop
+    service: name=tomcat9 state=stopped
+  - name: delete war directories in tomcat webapps
+    file: path=/opt/tomcat/webapps/SampleWebApp.war state=absent
+  - name: maven clean package
+    command: mvn -f /home/ubuntu/SampleWebApplication/pom.xml clean package
+  - name: copy war file
+    command: cp {{remote_warfile}} {{remote_webapps}}
+    notify: start tomcat
+  handlers:
+  - name: start tomcat
+    service: name=tomcat9 state=started
